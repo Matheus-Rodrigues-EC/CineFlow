@@ -1,0 +1,310 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  CUSTOMER
+  EMPLOYEE
+  ADMIN
+}
+
+enum MovieStatus {
+  COMING_SOON
+  PRE_PREMIERE
+  PREMIERE
+  NOW_SHOWING
+  ARCHIVED
+}
+
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  EXPIRED
+  CHECKED_IN
+  COMPLETED
+}
+
+enum PaymentStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  FAILED
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  DEBIT_CARD
+  PIX
+}
+
+enum Format {
+  TWO_D
+  THREE_D
+  IMAX
+  FOUR_DX
+}
+
+enum AudioLanguage {
+  DUBBED
+  SUBTITLED
+  ORIGINAL
+}
+
+enum Classification {
+  FREE
+  TEN
+  TWELVE
+  FOURTEEN
+  SIXTEEN
+  EIGHTEEN
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  phone     String?
+  avatar    String?
+  role      Role     @default(CUSTOMER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reservations Reservation[]
+
+  @@map("users")
+}
+
+model Movie {
+  id              String   @id @default(uuid())
+  title           String
+  synopsis        String
+  duration        Int
+  classification  Classification
+  poster          String?
+  banner          String?
+  status          MovieStatus @default(COMING_SOON)
+  releaseDate     DateTime
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  movieGenres MovieGenre[]
+  sessions Session[]
+  movieActors MovieActor[]
+  movieDirectors MovieDirector[]
+
+  @@map("movies")
+}
+
+model Room {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sessions Session[]
+  seats    Seat[]
+
+  @@map("rooms")
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  movieId   String
+  roomId    String
+  startTime DateTime
+  endTime   DateTime
+  language  AudioLanguage
+  format    Format
+  price     Decimal @db.Decimal(10,2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  movie Movie @relation(fields: [movieId], references: [id])
+  room  Room  @relation(fields: [roomId], references: [id])
+
+  reservations Reservation[]
+  sessionSeats SessionSeat[]
+
+  @@index([movieId])
+  @@index([roomId])
+  @@index([movieId, startTime])
+  @@unique([roomId, startTime])
+  @@map("sessions")
+}
+
+model Seat{
+  id        String   @id @default(uuid())
+  roomId    String
+  row       String
+  number    Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  room Room @relation(fields: [roomId], references: [id])
+
+  sessionSeats SessionSeat[]
+
+  @@unique([roomId, row, number])
+  @@map("seats")
+}
+
+model SessionSeat {
+  id         String @id @default(uuid())
+  sessionId  String
+  seatId     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  session Session @relation(fields: [sessionId], references: [id])
+  seat    Seat    @relation(fields: [seatId], references: [id])
+
+  reservationSeats ReservationSeat[]
+
+  @@index([sessionId])
+  @@index([seatId])
+  @@unique([sessionId, seatId])
+  @@map("session_seats")
+}
+
+model Reservation {
+  id        String   @id @default(uuid())
+  userId    String
+  sessionId String
+  status    ReservationStatus @default(PENDING)
+
+  expiresAt DateTime?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id])
+  session Session @relation(fields: [sessionId], references: [id])
+
+  reservationSeats ReservationSeat[]
+  reservationStatusHistory ReservationStatusHistory[]
+  payment Payment?
+
+  @@index([userId])
+  @@index([sessionId])
+  @@index([userId, status])
+  @@map("reservations")
+}
+
+model ReservationSeat {
+  id             String @id @default(uuid())
+  reservationId  String
+  sessionSeatId  String
+
+  reservation Reservation @relation(fields:[reservationId], references:[id])
+  sessionSeat SessionSeat @relation(fields:[sessionSeatId], references:[id])
+
+  @@unique([reservationId, sessionSeatId])
+  @@map("reservation_seats")
+}
+
+model Payment {
+  id             String   @id @default(uuid())
+  reservationId  String   @unique 
+  amount         Decimal @db.Decimal(10,2)
+  method         PaymentMethod
+  status         PaymentStatus @default(PENDING)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  reservation Reservation @relation(fields: [reservationId], references: [id])
+
+  @@index([status])
+  @@index([status, method])
+  @@map("payments")
+}
+
+model ReservationStatusHistory {
+  id             String   @id @default(uuid())
+  reservationId  String
+  status         ReservationStatus
+  changedAt      DateTime @default(now())
+
+  reservation Reservation @relation(fields: [reservationId], references: [id])
+
+  @@index([reservationId])
+  @@index([reservationId, changedAt])
+  @@map("reservation_status_history")
+}
+
+model Genre {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  movieGenres MovieGenre[]
+
+  @@map("genres")
+}
+
+model MovieGenre {
+  movieId String
+  genreId String
+
+  movie Movie @relation(fields:[movieId], references:[id])
+  genre Genre @relation(fields:[genreId], references:[id])
+
+  @@id([movieId, genreId])
+  @@map("movie_genres")
+}
+
+model Actor {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  movieActors MovieActor[]
+
+  @@map("actors")
+}
+
+model MovieActor {
+  movieId String
+  actorId String
+
+  movie Movie @relation(fields:[movieId], references:[id])
+  actor Actor @relation(fields:[actorId], references:[id])
+
+  @@id([movieId, actorId])
+  @@map("movie_actors")
+}
+
+model Director {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  movieDirectors MovieDirector[]
+
+  @@map("directors")
+}
+
+model MovieDirector {
+  movieId String
+  directorId String
+
+  movie Movie @relation(fields:[movieId], references:[id])
+  director Director @relation(fields:[directorId], references:[id])
+
+  @@id([movieId, directorId])
+  @@map("movie_directors")
+}
