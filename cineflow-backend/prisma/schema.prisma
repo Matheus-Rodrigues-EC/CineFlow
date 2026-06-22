@@ -12,6 +12,7 @@ datasource db {
   provider = "postgresql"
 }
 
+//----- ENUMS -----------------------------------------------------------------------
 enum Role {
   CUSTOMER
   EMPLOYEE
@@ -69,6 +70,8 @@ enum Classification {
   SIXTEEN
   EIGHTEEN
 }
+
+//----- MODELS ----------------------------------------------------------------------
 
 model User {
   id        String   @id @default(uuid())
