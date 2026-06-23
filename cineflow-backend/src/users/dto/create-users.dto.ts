@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 import {
   IsEmail,
   IsOptional,
@@ -8,6 +9,7 @@ import {
   MaxLength,
   Matches,
 } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 import { Role } from '../../common/enums/role.enum';
 
 export class CreateUserDto {
@@ -15,11 +17,17 @@ export class CreateUserDto {
   @IsNotEmpty({ message: 'Name is required' })
   @MinLength(3, { message: 'Name must be at least 3 characters long' })
   @MaxLength(50, { message: 'Name must be at most 50 characters long' })
+  @ApiProperty({
+    example: 'John Doe',
+  })
   name!: string;
 
   @IsEmail({}, { message: 'Invalid email address' })
   @IsNotEmpty({ message: 'Email is required' })
   @MaxLength(100, { message: 'Email must be at most 100 characters long' })
+  @ApiProperty({
+    example: 'john.doe@example.com',
+  })
   email!: string;
 
   @IsString()
@@ -33,6 +41,9 @@ export class CreateUserDto {
         'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
     },
   )
+  @ApiProperty({
+    example: 'P@ssw0rd!',
+  })
   password!: string;
 
   @IsOptional()
@@ -40,15 +51,24 @@ export class CreateUserDto {
   @Matches(/^\(?\d{2}\)?[\s-]?\d{4,5}-?\d{4}$/, {
     message: 'Telefone inválido',
   })
+  @ApiProperty({
+    example: '(12) 34567-8901',
+  })
   phone?: string;
 
   @IsOptional()
   @IsString()
+  @ApiProperty({
+    example: 'https://example.com/avatar.jpg',
+  })
   avatar?: string;
 }
 
 export class CreateEmployeeDto extends CreateUserDto {
   @IsNotEmpty({ message: 'Role is required' })
   @IsEnum(Role, { message: 'Role must be either CUSTOMER, EMPLOYEE or ADMIN' })
+  @ApiProperty({
+    example: 'EMPLOYEE',
+  })
   role!: Role;
 }
