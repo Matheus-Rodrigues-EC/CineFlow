@@ -1,10 +1,10 @@
-import { User } from '../../generated/prisma/client';
-import { Role } from '../../generated/prisma/enums';
+import { User, Role } from '@prisma/client';
 
 export class UserEntity {
   id!: User['id'];
   name!: User['name'];
   email!: User['email'];
+  password!: User['password'];
   phone!: User['phone'];
   avatar!: User['avatar'];
   role!: Role;

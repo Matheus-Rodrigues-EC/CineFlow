@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import {
   Body,
   Controller,
@@ -18,7 +17,7 @@ import { UpdateUserDto, UpdateEmployeeDto } from './dto/update-users.dto';
 
 import { UserEntity } from './entities/users.entity';
 
-@ApiTags('users')
+@ApiTags('Users')
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}

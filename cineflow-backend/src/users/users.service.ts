@@ -1,8 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   Injectable,
   NotFoundException,
@@ -30,7 +25,7 @@ export class UsersService {
     );
 
     if (userExists) {
-      throw new ConflictException('Email already exists');
+      throw new ConflictException('There is already a user with this email');
     }
 
     const hashedPassword = await this.passwordService.hash(
